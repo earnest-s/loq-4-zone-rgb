@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LoqRgbProof")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+970c7dd32334d9f73423d5e07ed016729138349e")]
 [assembly: System.Reflection.AssemblyProductAttribute("LoqRgbProof")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LoqRgbProof")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

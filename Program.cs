@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using System.Runtime.InteropServices;
 using HidSharp;
 
 enum BaseEffect
@@ -218,6 +219,9 @@ class Profile
 
 class Program
 {
+    [DllImport("user32.dll")]
+    static extern short GetAsyncKeyState(int vKey);
+
     static void Main()
     {
         var device = DeviceList.Local.GetHidDevices(0x048d, 0xc993)
@@ -242,7 +246,7 @@ class Program
         profile.Speed = 2;
         profile.Direction = Direction.Left;
 
-        PlaySwipe(keyboard, profile, SwipeMode.Fill, true);
+        PlayFade(keyboard, profile);
     }
 
     static void PlaySwipe(Keyboard keyboard, Profile profile, SwipeMode mode, bool cleanWithBlack)
@@ -320,5 +324,45 @@ class Program
         Array.Copy(array, array.Length - positions, temp, 0, positions);
         Array.Copy(array, 0, array, positions, array.Length - positions);
         Array.Copy(temp, 0, array, 0, positions);
+    }
+
+    static bool IsAnyKeyPressed()
+    {
+        for (int i = 8; i < 256; i++)
+        {
+            if ((GetAsyncKeyState(i) & 0x8000) != 0)
+                return true;
+        }
+        return false;
+    }
+
+    static void PlayFade(Keyboard keyboard, Profile profile)
+    {
+        DateTime now = DateTime.Now;
+        bool hasFaded = false;
+
+        while (true)
+        {
+            if (IsAnyKeyPressed())
+            {
+                keyboard.SetColorsTo(profile.RgbArray());
+                now = DateTime.Now;
+                hasFaded = false;
+            }
+            else
+            {
+                if (!hasFaded && (DateTime.Now - now).TotalSeconds > 20 / (double)profile.Speed)
+                {
+                    keyboard.TransitionColorsTo(new byte[12], 230, 3);
+                    hasFaded = true;
+                }
+                else
+                {
+                    Thread.Sleep(20);
+                }
+            }
+
+            Thread.Sleep(5);
+        }
     }
 }
