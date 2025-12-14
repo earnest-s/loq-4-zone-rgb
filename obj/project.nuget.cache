@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "RHJPZEZf+Fg=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\earni\\Downloads\\loq-rgb-proof\\LoqRgbProof\\LoqRgbProof.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\earni\\.nuget\\packages\\hidsharp\\2.6.4\\hidsharp.2.6.4.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,17 @@
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\bin\Debug\net10.0\LoqRgbProof.exe
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\bin\Debug\net10.0\LoqRgbProof.deps.json
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\bin\Debug\net10.0\LoqRgbProof.runtimeconfig.json
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\bin\Debug\net10.0\LoqRgbProof.dll
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\bin\Debug\net10.0\LoqRgbProof.pdb
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\obj\Debug\net10.0\LoqRgbProof.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\obj\Debug\net10.0\LoqRgbProof.AssemblyInfoInputs.cache
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\obj\Debug\net10.0\LoqRgbProof.AssemblyInfo.cs
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\obj\Debug\net10.0\LoqRgbProof.csproj.CoreCompileInputs.cache
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\obj\Debug\net10.0\LoqRgbProof.dll
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\obj\Debug\net10.0\refint\LoqRgbProof.dll
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\obj\Debug\net10.0\LoqRgbProof.pdb
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\obj\Debug\net10.0\LoqRgbProof.genruntimeconfig.cache
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\obj\Debug\net10.0\ref\LoqRgbProof.dll
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\obj\Debug\net10.0\LoqRgbProof.csproj.AssemblyReference.cache
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\bin\Debug\net10.0\HidSharp.dll
+C:\Users\earni\Downloads\loq-rgb-proof\LoqRgbProof\obj\Debug\net10.0\LoqRgbPr.0558A37E.Up2Date
