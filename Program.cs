@@ -246,7 +246,12 @@ class Program
         profile.Speed = 2;
         profile.Direction = Direction.Left;
 
-        PlayFade(keyboard, profile);
+        profile.RgbZones[0] = new byte[] { 255, 0, 0 };
+        profile.RgbZones[1] = new byte[] { 0, 255, 0 };
+        profile.RgbZones[2] = new byte[] { 0, 0, 255 };
+        profile.RgbZones[3] = new byte[] { 255, 0, 255 };
+
+        PlaySmoothWave(keyboard, profile, SwipeMode.Change, false);
     }
 
     static void PlaySwipe(Keyboard keyboard, Profile profile, SwipeMode mode, bool cleanWithBlack)
@@ -363,6 +368,67 @@ class Program
             }
 
             Thread.Sleep(5);
+        }
+    }
+
+    static void PlaySmoothWave(Keyboard keyboard, Profile profile, SwipeMode mode, bool cleanWithBlack)
+    {
+        const byte STEPS = 150;
+        
+        byte[] changeRgbArray = profile.RgbArray();
+        byte[] fillRgbArray = profile.RgbArray();
+        byte[] usedColorsArray = new byte[12];
+
+        byte steps = (byte)(STEPS / profile.Speed);
+
+        while (true)
+        {
+            switch (mode)
+            {
+                case SwipeMode.Change:
+                    switch (profile.Direction)
+                    {
+                        case Direction.Left:
+                            RotateRight(changeRgbArray, 3);
+                            break;
+                        case Direction.Right:
+                            RotateLeft(changeRgbArray, 3);
+                            break;
+                    }
+                    keyboard.TransitionColorsTo(changeRgbArray, steps, 10);
+                    break;
+
+                case SwipeMode.Fill:
+                    int[] range;
+                    if (profile.Direction == Direction.Left)
+                        range = new int[] { 0, 1, 2, 3 };
+                    else
+                        range = new int[] { 3, 2, 1, 0 };
+
+                    for (int i = 0; i < range.Length; i++)
+                    {
+                        for (int j = 0; j < range.Length; j++)
+                        {
+                            usedColorsArray[range[j] * 3] = fillRgbArray[range[i] * 3];
+                            usedColorsArray[range[j] * 3 + 1] = fillRgbArray[range[i] * 3 + 1];
+                            usedColorsArray[range[j] * 3 + 2] = fillRgbArray[range[i] * 3 + 2];
+                            keyboard.TransitionColorsTo(usedColorsArray, steps, 1);
+                        }
+                        if (cleanWithBlack)
+                        {
+                            for (int j = 0; j < range.Length; j++)
+                            {
+                                usedColorsArray[range[j] * 3] = 0;
+                                usedColorsArray[range[j] * 3 + 1] = 0;
+                                usedColorsArray[range[j] * 3 + 2] = 0;
+                                keyboard.TransitionColorsTo(usedColorsArray, steps, 1);
+                            }
+                        }
+                    }
+                    break;
+            }
+
+            Thread.Sleep(20);
         }
     }
 }
