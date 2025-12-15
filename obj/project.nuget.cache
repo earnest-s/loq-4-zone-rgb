@@ -1,10 +1,24 @@
 {
   "version": 2,
-  "dgSpecHash": "RHJPZEZf+Fg=",
+  "dgSpecHash": "d0c3zObZeCg=",
   "success": true,
   "projectFilePath": "C:\\Users\\earni\\Downloads\\loq-rgb-proof\\LoqRgbProof\\LoqRgbProof.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\earni\\.nuget\\packages\\hidsharp\\2.6.4\\hidsharp.2.6.4.nupkg.sha512"
+    "C:\\Users\\earni\\.nuget\\packages\\hidsharp\\2.6.4\\hidsharp.2.6.4.nupkg.sha512",
+    "C:\\Users\\earni\\.nuget\\packages\\system.drawing.common\\9.0.0\\system.drawing.common.9.0.0.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1510",
+      "level": "Warning",
+      "message": "PackageReference System.Drawing.Common will not be pruned. Consider removing this package from your dependencies, as it is likely unnecessary.",
+      "projectPath": "C:\\Users\\earni\\Downloads\\loq-rgb-proof\\LoqRgbProof\\LoqRgbProof.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\earni\\Downloads\\loq-rgb-proof\\LoqRgbProof\\LoqRgbProof.csproj",
+      "libraryId": "System.Drawing.Common",
+      "targetGraphs": [
+        "net10.0-windows7.0"
+      ]
+    }
+  ]
 }

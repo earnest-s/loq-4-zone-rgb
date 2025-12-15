@@ -2,6 +2,9 @@
 using System.Linq;
 using System.Threading;
 using System.Runtime.InteropServices;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Collections.Generic;
 using HidSharp;
 
 enum BaseEffect
@@ -23,6 +26,14 @@ enum SwipeMode
 {
     Change,
     Fill
+}
+
+enum RippleMove
+{
+    Center,
+    Left,
+    Right,
+    Off
 }
 
 class LightingState
@@ -251,7 +262,7 @@ class Program
         profile.RgbZones[2] = new byte[] { 0, 0, 255 };
         profile.RgbZones[3] = new byte[] { 255, 0, 255 };
 
-        PlaySmoothWave(keyboard, profile, SwipeMode.Change, false);
+        PlayAmbient(keyboard, 5, 1.5f);
     }
 
     static void PlaySwipe(Keyboard keyboard, Profile profile, SwipeMode mode, bool cleanWithBlack)
@@ -264,7 +275,7 @@ class Program
 
         byte steps = (byte)(STEPS / profile.Speed);
 
-        for (int iteration = 0; iteration < 5; iteration++)
+        while (true)
         {
             switch (mode)
             {
@@ -429,6 +440,408 @@ class Program
             }
 
             Thread.Sleep(20);
+        }
+    }
+
+    static void PlayRipple(Keyboard keyboard, Profile profile)
+    {
+        HashSet<int>[] zonePressed = new HashSet<int>[4]
+        {
+            new HashSet<int>(),
+            new HashSet<int>(),
+            new HashSet<int>(),
+            new HashSet<int>()
+        };
+        RippleMove[] zoneState = new RippleMove[4] { RippleMove.Off, RippleMove.Off, RippleMove.Off, RippleMove.Off };
+
+        DateTime lastStepTime = DateTime.Now;
+
+        while (true)
+        {
+            for (int vk = 0; vk < 256; vk++)
+            {
+                short keyState = GetAsyncKeyState(vk);
+                bool isPressed = (keyState & 0x8000) != 0;
+
+                if (isPressed)
+                {
+                    int zone = GetKeyZone(vk);
+                    if (zone != -1)
+                    {
+                        zonePressed[zone].Add(vk);
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        zonePressed[i].Remove(vk);
+                    }
+                }
+            }
+
+            zoneState = AdvanceZoneState(zoneState, ref lastStepTime, profile.Speed);
+
+            for (int i = 0; i < zonePressed.Length; i++)
+            {
+                if (zonePressed[i].Count > 0)
+                {
+                    zoneState[i] = RippleMove.Center;
+                }
+            }
+
+            byte[] rgbArray = profile.RgbArray();
+            byte[] finalArr = new byte[12];
+
+            for (int i = 0; i < zoneState.Length; i++)
+            {
+                if (zoneState[i] != RippleMove.Off)
+                {
+                    Array.Copy(rgbArray, i * 3, finalArr, i * 3, 3);
+                }
+            }
+
+            keyboard.TransitionColorsTo(finalArr, 20, 0);
+            Thread.Sleep(50);
+        }
+    }
+
+    static RippleMove[] AdvanceZoneState(RippleMove[] zoneState, ref DateTime lastStepTime, byte speed)
+    {
+        DateTime now = DateTime.Now;
+
+        if ((now - lastStepTime).TotalMilliseconds > (200.0 / speed))
+        {
+            RippleMove[] newState = new RippleMove[4] { RippleMove.Off, RippleMove.Off, RippleMove.Off, RippleMove.Off };
+
+            lastStepTime = now;
+
+            for (int i = 0; i < zoneState.Length; i++)
+            {
+                switch (zoneState[i])
+                {
+                    case RippleMove.Left:
+                        if (i != 0)
+                        {
+                            newState[i - 1] = RippleMove.Left;
+                        }
+                        break;
+
+                    case RippleMove.Right:
+                        if (i < 3)
+                        {
+                            newState[i + 1] = RippleMove.Right;
+                        }
+                        break;
+                }
+            }
+
+            for (int i = 0; i < zoneState.Length; i++)
+            {
+                if (zoneState[i] == RippleMove.Center)
+                {
+                    if (i != 0)
+                    {
+                        newState[i - 1] = RippleMove.Left;
+                    }
+
+                    if (i < 3)
+                    {
+                        newState[i + 1] = RippleMove.Right;
+                    }
+                }
+            }
+
+            return newState;
+        }
+        else
+        {
+            return zoneState;
+        }
+    }
+
+    static int GetKeyZone(int vk)
+    {
+        if (vk >= 0x70 && vk <= 0x73)
+            return 0;
+        if (vk == 0xC0)
+            return 0;
+        if (vk >= 0x31 && vk <= 0x34)
+            return 0;
+        if (vk == 0x09 || vk == 0x51 || vk == 0x57 || vk == 0x45)
+            return 0;
+        if (vk == 0x14 || vk == 0x41 || vk == 0x53 || vk == 0x44)
+            return 0;
+        if (vk == 0xA0 || vk == 0x5A || vk == 0x58)
+            return 0;
+        if (vk == 0xA2 || vk == 0x5B || vk == 0xA4)
+            return 0;
+
+        if (vk >= 0x74 && vk <= 0x79)
+            return 1;
+        if (vk >= 0x35 && vk <= 0x39)
+            return 1;
+        if (vk >= 0x52 && vk <= 0x55)
+            return 1;
+        if (vk == 0x49)
+            return 1;
+        if (vk >= 0x46 && vk <= 0x4B)
+            return 1;
+        if (vk >= 0x43 && vk <= 0x4E)
+            return 1;
+        if (vk == 0xBC || vk == 0x20 || vk == 0xA5)
+            return 1;
+
+        if (vk == 0x7A || vk == 0x7B || vk == 0x2D || vk == 0x2E)
+            return 2;
+        if (vk == 0x30 || vk == 0xBD || vk == 0xBB || vk == 0x08)
+            return 2;
+        if (vk == 0x4F || vk == 0x50 || vk == 0xDB || vk == 0xDD || vk == 0x0D)
+            return 2;
+        if (vk == 0x4C || vk == 0xBA || vk == 0xDE || vk == 0xDC)
+            return 2;
+        if (vk == 0xBE || vk == 0xBF || vk == 0xA1)
+            return 2;
+        if (vk == 0xA3 || vk == 0x26 || vk == 0x28 || vk == 0x25 || vk == 0x27)
+            return 2;
+
+        if (vk == 0x24 || vk == 0x23 || vk == 0x21 || vk == 0x22)
+            return 3;
+        if (vk >= 0x6F && vk <= 0x6D)
+            return 3;
+        if (vk >= 0x67 && vk <= 0x69)
+            return 3;
+        if (vk >= 0x64 && vk <= 0x6B)
+            return 3;
+        if (vk >= 0x61 && vk <= 0x63)
+            return 3;
+        if (vk == 0x60)
+            return 3;
+
+        return -1;
+    }
+
+    static void PlayChristmas(Keyboard keyboard)
+    {
+        byte[][] xmasColorArray = new byte[4][]
+        {
+            new byte[] { 255, 10, 10 },
+            new byte[] { 255, 255, 20 },
+            new byte[] { 30, 255, 30 },
+            new byte[] { 70, 70, 255 }
+        };
+        int subeffectCount = 4;
+        int lastSubeffect = -1;
+        Random rng = new Random();
+
+        while (true)
+        {
+            int subeffect = rng.Next(0, subeffectCount);
+            while (lastSubeffect == subeffect)
+            {
+                subeffect = rng.Next(0, subeffectCount);
+            }
+            lastSubeffect = subeffect;
+
+            switch (subeffect)
+            {
+                case 0:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        foreach (byte[] colors in xmasColorArray)
+                        {
+                            keyboard.SolidSetColorsTo(colors);
+                            Thread.Sleep(500);
+                        }
+                    }
+                    break;
+
+                case 1:
+                    {
+                        int color1Index = rng.Next(0, 4);
+                        byte[] usedColors1 = xmasColorArray[color1Index];
+
+                        int color2Index = rng.Next(0, 4);
+                        while (color1Index == color2Index)
+                        {
+                            color2Index = rng.Next(0, 4);
+                        }
+                        byte[] usedColors2 = xmasColorArray[color2Index];
+
+                        for (int i = 0; i < 4; i++)
+                        {
+                            keyboard.SolidSetColorsTo(usedColors1);
+                            Thread.Sleep(400);
+                            keyboard.SolidSetColorsTo(usedColors2);
+                            Thread.Sleep(400);
+                        }
+                    }
+                    break;
+
+                case 2:
+                    {
+                        byte steps = 100;
+                        keyboard.TransitionColorsTo(new byte[12], steps, 1);
+                        byte[] usedColorsArray = new byte[12];
+                        int leftOrRight = rng.Next(0, 2);
+
+                        int[] range;
+                        if (leftOrRight == 0)
+                        {
+                            range = new int[] { 0, 1, 2, 3 };
+                        }
+                        else
+                        {
+                            range = new int[] { 3, 2, 1, 0 };
+                        }
+
+                        foreach (byte[] color in xmasColorArray)
+                        {
+                            foreach (int j in range)
+                            {
+                                usedColorsArray[j * 3] = color[0];
+                                usedColorsArray[j * 3 + 1] = color[1];
+                                usedColorsArray[j * 3 + 2] = color[2];
+                                keyboard.TransitionColorsTo(usedColorsArray, steps, 1);
+                            }
+                            foreach (int j in range)
+                            {
+                                usedColorsArray[j * 3] = 0;
+                                usedColorsArray[j * 3 + 1] = 0;
+                                usedColorsArray[j * 3 + 2] = 0;
+                                keyboard.TransitionColorsTo(usedColorsArray, steps, 1);
+                            }
+                        }
+                    }
+                    break;
+
+                case 3:
+                    {
+                        byte[] state1 = new byte[] { 255, 255, 255, 0, 0, 0, 255, 255, 255, 0, 0, 0 };
+                        byte[] state2 = new byte[] { 0, 0, 0, 255, 255, 255, 0, 0, 0, 255, 255, 255 };
+                        byte steps = 30;
+                        for (int i = 0; i < 4; i++)
+                        {
+                            keyboard.TransitionColorsTo(state1, steps, 1);
+                            Thread.Sleep(400);
+                            keyboard.TransitionColorsTo(state2, steps, 1);
+                            Thread.Sleep(400);
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+
+    static void PlayAmbient(Keyboard keyboard, byte fps, float saturationBoost)
+    {
+        int screenWidth = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width;
+        int screenHeight = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height;
+        long nanosPerFrame = 1_000_000_000 / fps;
+        TimeSpan secondsPerFrame = TimeSpan.FromMilliseconds(nanosPerFrame / 1_000_000.0);
+
+        while (true)
+        {
+            DateTime now = DateTime.Now;
+
+            try
+            {
+                using (Bitmap screenshot = new Bitmap(screenWidth, screenHeight, PixelFormat.Format32bppArgb))
+                {
+                    using (Graphics g = Graphics.FromImage(screenshot))
+                    {
+                        g.CopyFromScreen(0, 0, 0, 0, screenshot.Size);
+                    }
+
+                    using (Bitmap resized = new Bitmap(4, 1))
+                    {
+                        using (Graphics g = Graphics.FromImage(resized))
+                        {
+                            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                            g.DrawImage(screenshot, 0, 0, 4, 1);
+                        }
+
+                        byte[] rgb = new byte[12];
+                        for (int i = 0; i < 4; i++)
+                        {
+                            Color pixel = resized.GetPixel(i, 0);
+                            float r = pixel.R / 255.0f;
+                            float g_val = pixel.G / 255.0f;
+                            float b = pixel.B / 255.0f;
+
+                            float max = Math.Max(r, Math.Max(g_val, b));
+                            float min = Math.Min(r, Math.Min(g_val, b));
+                            float delta = max - min;
+
+                            float h = 0;
+                            float s = 0;
+                            float v = max;
+
+                            if (delta != 0)
+                            {
+                                s = delta / max;
+
+                                if (r == max)
+                                    h = (g_val - b) / delta + (g_val < b ? 6 : 0);
+                                else if (g_val == max)
+                                    h = (b - r) / delta + 2;
+                                else
+                                    h = (r - g_val) / delta + 4;
+
+                                h /= 6;
+                            }
+
+                            s = Math.Min(1.0f, s * saturationBoost);
+
+                            float c = v * s;
+                            float x = c * (1 - Math.Abs((h * 6) % 2 - 1));
+                            float m = v - c;
+
+                            float r_out = 0, g_out = 0, b_out = 0;
+
+                            if (h < 1.0f / 6.0f)
+                            {
+                                r_out = c; g_out = x; b_out = 0;
+                            }
+                            else if (h < 2.0f / 6.0f)
+                            {
+                                r_out = x; g_out = c; b_out = 0;
+                            }
+                            else if (h < 3.0f / 6.0f)
+                            {
+                                r_out = 0; g_out = c; b_out = x;
+                            }
+                            else if (h < 4.0f / 6.0f)
+                            {
+                                r_out = 0; g_out = x; b_out = c;
+                            }
+                            else if (h < 5.0f / 6.0f)
+                            {
+                                r_out = x; g_out = 0; b_out = c;
+                            }
+                            else
+                            {
+                                r_out = c; g_out = 0; b_out = x;
+                            }
+
+                            rgb[i * 3] = (byte)((r_out + m) * 255);
+                            rgb[i * 3 + 1] = (byte)((g_out + m) * 255);
+                            rgb[i * 3 + 2] = (byte)((b_out + m) * 255);
+                        }
+
+                        keyboard.SetColorsTo(rgb);
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            TimeSpan elapsedTime = DateTime.Now - now;
+            if (elapsedTime < secondsPerFrame)
+            {
+                Thread.Sleep(secondsPerFrame - elapsedTime);
+            }
         }
     }
 }
